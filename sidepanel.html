@@ -2,8 +2,15 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>关键词分析助手</title>
+    <title>KeyBot - 你的关键词分析小助手</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="lib/marked.min.js"></script>
+    <script>
+        // 确保 marked 加载完成
+        if (typeof marked === 'undefined') {
+            console.error('Marked library failed to load');
+        }
+    </script>
     <style>
         body {
             margin: 0;
@@ -19,6 +26,16 @@
 
         .header {
             margin-bottom: 20px;
+        }
+
+        .header h2 {
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin: -15px 0 20px;
+            font-size: 14px;
         }
 
         .search-box {
@@ -214,15 +231,96 @@
             line-height: 1.6;
         }
 
+        .analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-copy {
+            background: #2196F3;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+
+        .btn-copy .material-icons {
+            font-size: 16px;
+        }
+
+        .btn-copy:hover {
+            opacity: 0.9;
+        }
+
+        /* Markdown 样式 */
         .analysis-content h1,
         .analysis-content h2,
-        .analysis-content h3 {
+        .analysis-content h3,
+        .analysis-content h4,
+        .analysis-content h5,
+        .analysis-content h6 {
             color: #2196F3;
             margin: 1em 0 0.5em;
+            font-weight: 600;
+        }
+
+        .analysis-content ul,
+        .analysis-content ol {
+            padding-left: 2em;
+            margin: 1em 0;
+        }
+
+        .analysis-content li {
+            margin: 0.5em 0;
         }
 
         .analysis-content p {
             margin: 0.8em 0;
+            line-height: 1.6;
+        }
+
+        .analysis-content code {
+            background: #f5f5f5;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .analysis-content pre {
+            background: #f5f5f5;
+            padding: 1em;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .analysis-content blockquote {
+            border-left: 4px solid #2196F3;
+            margin: 1em 0;
+            padding-left: 1em;
+            color: #666;
+        }
+
+        .analysis-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+
+        .analysis-content th,
+        .analysis-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .analysis-content th {
+            background: #f5f5f5;
         }
 
         .list-item {
@@ -265,8 +363,6 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2>关键词分析助手</h2>
-            
             <div class="input-group">
                 <input type="text" id="keywordInput" placeholder="输入关键词进行搜索或回车保存">
                 <button class="btn btn-save btn-tooltip" id="saveKeyword" title="保存关键词">

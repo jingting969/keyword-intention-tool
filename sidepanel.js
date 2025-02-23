@@ -1,5 +1,9 @@
 class KeywordManager {
     constructor() {
+        // 添加对实例的引用，以便在HTML中调用
+        document.querySelector('.container').classList.add('KeywordManager');
+        document.querySelector('.container').KeywordManager = this;
+
         this.initializeElements();
         this.bindEvents();
         this.loadKeywords();
@@ -296,41 +300,79 @@ class KeywordManager {
         }, 3000);
     }
 
-    // 将 Markdown 转换为 HTML
+    // 使用 marked 渲染 Markdown
     markdownToHtml(text) {
-        // 处理标题
-        text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-        text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-        text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-        
-        // 处理列表
-        text = text.replace(/^\d+\. (.*$)/gm, '<div class="list-item"><span class="number">$1</span></div>');
-        text = text.replace(/^- (.*$)/gm, '<div class="list-item">• $1</div>');
-        
-        // 处理强调
-        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
-        // 处理段落
-        text = text.split('\n').map(line => {
-            if (line && !line.startsWith('<')) {
+        try {
+            if (typeof marked === 'undefined') {
+                console.error('Marked library is not loaded');
+                return this.fallbackMarkdownToHtml(text);
+            }
+
+            marked.setOptions({
+                gfm: true, // 启用 GitHub 风格的 Markdown
+                breaks: true, // 启用换行符
+                headerIds: false, // 禁用标题 ID
+                mangle: false, // 禁用标题 ID 转义
+                sanitize: false, // 允许 HTML 标签
+            });
+            return marked.parse(text);
+        } catch (error) {
+            console.error('Markdown parsing failed:', error);
+            return this.fallbackMarkdownToHtml(text);
+        }
+    }
+
+    // 后备的 Markdown 转换方法
+    fallbackMarkdownToHtml(text) {
+        // 简单的文本转换
+        return text.split('\n').map(line => {
+            if (line.startsWith('# ')) {
+                return `<h1>${line.slice(2)}</h1>`;
+            } else if (line.startsWith('## ')) {
+                return `<h2>${line.slice(3)}</h2>`;
+            } else if (line.startsWith('### ')) {
+                return `<h3>${line.slice(4)}</h3>`;
+            } else if (line.trim().length > 0) {
                 return `<p>${line}</p>`;
             }
             return line;
         }).join('');
-        
-        return text;
     }
 
     // 更新分析面板内容
     updateAnalysisContent(content) {
         const formattedContent = this.markdownToHtml(content);
         this.analysisPanel.innerHTML = `
-            <h3>关键词："${this.currentKeyword.text}"的分析结果</h3>
+            <div class="analysis-header">
+                <h3>关键词："${this.currentKeyword.text}"的分析结果</h3>
+                <button class="btn-copy" id="copyButton">
+                    <span class="material-icons">content_copy</span>
+                    复制结果
+                </button>
+            </div>
             <div class="analysis-content">
                 ${formattedContent}
             </div>
         `;
+
+        // 添加复制按钮事件监听
+        const copyButton = this.analysisPanel.querySelector('#copyButton');
+        copyButton.addEventListener('click', () => this.copyAnalysisResult());
+    }
+
+    // 复制分析结果
+    async copyAnalysisResult() {
+        try {
+            // 获取分析内容，排除复制按钮
+            const analysisContent = this.analysisPanel.querySelector('.analysis-content');
+            const content = analysisContent.innerText;
+
+            await navigator.clipboard.writeText(content);
+            this.showNotification('分析结果已复制到剪贴板');
+        } catch (error) {
+            console.error('复制失败:', error);
+            this.showNotification('复制失败，请重试');
+        }
     }
 
     // 分析关键词
@@ -338,7 +380,7 @@ class KeywordManager {
         this.currentKeyword = keyword;
         this.switchTab('analysis');
         this.loading.classList.add('active');
-        this.analysisPanel.innerHTML = '<p>正在分析中...</p>';
+        this.analysisPanel.innerHTML = `<p>正在分析「${keyword.text}」...</p>`;
 
         try {
             const response = await chrome.runtime.sendMessage({

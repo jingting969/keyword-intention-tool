@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "关键词分析助手",
+  "name": "KeyBot - 你的关键词分析小助手",
   "version": "1.0",
   "description": "帮助独立开发者分析用户搜索意图并提供产品开发建议",
   "permissions": [

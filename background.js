@@ -83,15 +83,19 @@ async function analyzeKeyword(keyword) {
     
     console.log('开始分析关键词:', keyword);
     
-    const prompt = `你现在是一名独立开发者，想通过搜索关键词来开发产品，你需要告诉我用户的潜在搜索意图以及开发者可切入的方向。
+    const prompt = `你现在是一名专业的网站开发顾问，需要基于用户的搜索关键词，分析可能的网站功能需求和开发建议。
 
 关键词：${keyword}
 
 请从以下几个方面进行分析：
-1. 用户搜索意图分析
-2. 市场机会分析
-3. 可能的产品方向
-4. 开发建议
+1. 用户搜索目的分析
+   - 用户通过这个关键词想要解决什么问题？
+   - 用户在寻找什么类型的网站或功能？
+
+2. 网站功能建议
+   - 核心功能清单
+   - 差异化功能建议
+   - 用户体验要点
 `;
 
     try {
@@ -105,54 +109,33 @@ async function analyzeKeyword(keyword) {
             body: JSON.stringify({
                 model: 'deepseek-chat',
                 messages: [
-                    { role: 'system', content: '你是一个专业的产品分析师和独立开发者顾问。' },
+                    { role: 'system', content: '你是一个专业的网站开发顾问，擅长分析用户需求并提供具体的网站功能设计和技术实现建议。' },
                     { role: 'user', content: prompt }
                 ],
-                temperature: 0.7,
-                stream: true
+                temperature: 0.7
             })
         });
 
+        console.log('API响应状态:', response.status);
+        const responseText = await response.text();
+        console.log('API响应内容:', responseText);
+
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`API请求失败: ${response.status}, ${errorText}`);
+            throw new Error(`API请求失败: ${response.status}, ${responseText}`);
         }
 
-        const reader = response.body.getReader();
-        let content = '';
-        
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            // 解码响应数据
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n');
-            
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const data = line.slice(6);
-                    if (data === '[DONE]') continue;
-                    
-                    try {
-                        const parsed = JSON.parse(data);
-                        if (parsed.choices[0].delta.content) {
-                            content += parsed.choices[0].delta.content;
-                            // 发送部分内容更新
-                            chrome.runtime.sendMessage({
-                                type: 'analysisUpdate',
-                                content: content
-                            });
-                        }
-                    } catch (e) {
-                        console.error('解析响应数据失败:', e);
-                    }
-                }
-            }
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            throw new Error(`解析响应失败: ${e.message}, 原始响应: ${responseText}`);
         }
 
-        return content;
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            throw new Error(`无效的API响应格式: ${JSON.stringify(data)}`);
+        }
 
+        return data.choices[0].message.content;
     } catch (error) {
         console.error('API调用失败:', error.message);
         console.error('完整错误:', error);
