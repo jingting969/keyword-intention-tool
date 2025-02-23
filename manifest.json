@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "关键词分析助手",
+  "version": "1.0",
+  "description": "帮助独立开发者分析用户搜索意图并提供产品开发建议",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "contextMenus",
+    "sidePanel",
+    "https://api.zhizengzeng.com/"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    },
+    "default_side_panel": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"]
+  }],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+} 

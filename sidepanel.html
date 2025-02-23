@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>关键词分析助手</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: #fff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .keyword-list {
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .keyword-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            background: white;
+            transition: background-color 0.2s;
+        }
+
+        .keyword-item:last-child {
+            border-bottom: none;
+        }
+
+        .keyword-item.dragging {
+            opacity: 0.5;
+            background: #f5f5f5;
+        }
+
+        .drag-handle {
+            color: #999;
+            margin-right: 10px;
+            font-size: 20px;
+            cursor: move;
+        }
+
+        .keyword-text {
+            flex: 1;
+        }
+
+        .keyword-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+        }
+
+        .btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn .material-icons {
+            font-size: 18px;
+        }
+
+        .btn-tooltip {
+            position: relative;
+        }
+
+        .btn-tooltip:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 8px;
+        }
+
+        /* 第一个关键词的按钮提示显示在下方 */
+        .keyword-item:first-child .btn-tooltip:hover::after {
+            bottom: auto;
+            top: 100%;
+            margin-bottom: 0;
+            margin-top: 8px;
+        }
+
+        .btn-analyze {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-trends {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-difficulty {
+            background: #FF9800;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ff4444;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .analysis-panel {
+            margin-top: 20px;
+            background: white;
+            border-radius: 4px;
+            padding: 15px;
+            display: none;
+        }
+
+        .analysis-panel.active {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #keywordInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .btn-save {
+            background: #4CAF50;
+            color: white;
+            width: 32px;
+            padding: 0;
+        }
+
+        .analysis-content {
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .analysis-content h1,
+        .analysis-content h2,
+        .analysis-content h3 {
+            color: #2196F3;
+            margin: 1em 0 0.5em;
+        }
+
+        .analysis-content p {
+            margin: 0.8em 0;
+        }
+
+        .list-item {
+            margin: 0.5em 0;
+            padding-left: 1.5em;
+            position: relative;
+        }
+
+        .list-item .number {
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        .analysis-content strong {
+            color: #1976D2;
+            font-weight: bold;
+        }
+
+        .analysis-content em {
+            color: #666;
+            font-style: italic;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error-message h4 {
+            color: #f44336;
+            margin-bottom: 10px;
+        }
+
+        .btn-retry {
+            margin-top: 15px;
+            background: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>关键词分析助手</h2>
+            
+            <div class="input-group">
+                <input type="text" id="keywordInput" placeholder="输入关键词进行搜索或回车保存">
+                <button class="btn btn-save btn-tooltip" id="saveKeyword" title="保存关键词">
+                    <span class="material-icons">add</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="keywords">关键词列表</button>
+            <button class="tab" data-tab="analysis">意图分析</button>
+        </div>
+
+        <div class="keyword-list" id="keywordList">
+            <!-- 关键词列表将通过 JavaScript 动态添加 -->
+        </div>
+
+        <div class="analysis-panel" id="analysisPanel">
+            <div>先去选择关键词</div>
+            <div id="analysisContent"></div>
+        </div>
+
+        <div class="loading" id="loading">
+            
+        </div>
+    </div>
+    <script src="sidepanel.js"></script>
+</body>
+</html> 
