@@ -73,7 +73,8 @@ class KeywordManager {
                 lastAnalyzedTime: null
             };
 
-            keywords.push(newKeyword);
+            // 将新关键词添加到数组开头，而不是末尾
+            keywords.unshift(newKeyword);
             await chrome.storage.sync.set({ keywords });
             
             this.keywordInput.value = '';
